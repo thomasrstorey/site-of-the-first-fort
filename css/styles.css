@@ -1,0 +1,62 @@
+
+
+@media (min-width: 1024px) {
+	#map{
+		width: 100%;
+		height: 100%;
+	}
+
+	#map-container{
+		width: 100%;
+		max-width: 1920px;
+	}
+
+	#text-column{
+		width: 25%;
+	}
+
+	#map-column{
+		width: 65.3333333333%; 
+	}
+	
+}
+
+@media (max-width: 1023px) {
+	#map{
+		width: 100%;
+		height: 50%;
+	}
+
+	#map-container{
+		width: 100%;
+		max-width: 1024px;
+	}
+
+	#text-column{
+		width: 95%;
+	}
+
+	#map-column{
+		width: 100%;
+	}
+}
+
+@media (max-width: 400px) {
+	#map{
+		width: 100%;
+		height: 50%;
+	}
+
+	#map-container{
+		width: 100%;
+		max-width: 1024px;
+	}
+
+	#text-column{
+		width: 100%;
+	}
+
+	#map-column{
+		width: 100%;
+	}
+}
