@@ -1,4 +1,3 @@
-<!DOCTYPE <!DOCTYPE html>
 <html>
 <head>
 	<meta charset=utf-8 />
@@ -9,6 +8,9 @@
 	<link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.8/mapbox.css' rel='stylesheet' />
 	<!-- JQ -->
 	<script src='./libs/jquery/dist/jquery.min.js'></script>
+	<script src='./libs/progressbar.js/dist/progressbar.min.js'></script>
+	<!-- RiTa -->
+	<script src="./libs/rita/rita.min.js"></script>
 	<!-- CSS -->
 	<link href='./libs/skeleton-css/css/normalize.css' rel="stylesheet" />
 	<link href='./libs/skeleton-css/css/skeleton.css' rel="stylesheet" />
@@ -16,6 +18,12 @@
 	<link href='./css/styles.css' rel="stylesheet" />
 </head>
 <body>
+	<div id="progress-overlay">
+		<div id="progress-container">
+			<div class="progress" id="progress"></div>
+		</div>
+	</div>
+	
 	<div id="map-container" class="container">
 		<div class="row">
 			<div  id="map-column" class="two-thirds column">
@@ -33,53 +41,111 @@
 		</div>
 		
 	</div>
-	
 
 	<script>
 		L.mapbox.accessToken = 'pk.eyJ1IjoidHJzdG9yZXkiLCJhIjoiUzI3VDJDbyJ9.RWm7-0aLW4yy1ZzDt8I5Hw';
-		// Define a map without a Map ID so we
-		// have to add each part of it manually.
-		var textCol = $("#text-column");
-		var textTitle = $("#text-title");
-		var textBody = $("#text-body");
-		var about = $("#about");
-		about.click(showAbout);
-		var currentMarker = L.marker();
-		var map = L.mapbox.map('map', undefined);
-		map.attributionControl.removeFrom(map);
-		// The visible tile layer
-		L.mapbox.tileLayer('trstorey.lo02bfng').addTo(map);
+
+		var markersStJohns = "";
+		var fontaneda = "";
+		var markersAlachua = "";
+		var markersBroward = "";
+		var spanishFlorida = "";
+		$(document).ready(function () {
+
+			var circleProgress = 0.0;
+			var rm  = new RiMarkov(5, true, false);
+			var circle = new ProgressBar.Circle('#progress', {
+		        color: '#555',
+		        trailColor: '#eee',
+		        strokeWidth: 2,
+		        duration: 1000,
+		        easing: 'easeInOut'
+		    });
+
+		    circle.set(circleProgress);
+
+		    function updateLoad (str) {
+		    	rm.loadText(str);
+			    circleProgress += 0.2;
+			    circle.animate(circleProgress, {}, function () {
+
+			    	if(circle.value() >= 1.0){
+			    		circle.destroy();
+			    		$("#progress-container").remove();
+			    		$("#progress-overlay").remove();
+			    	};
+			    });
+		    }
+
+			$.get( "data/markers_stjohns.txt", function( data ) {
+			  markersStJohns = new String(data);
+			  updateLoad(markersStJohns);
+			}, 'text');
+			$.get( "data/markers_alachua.txt", function( data ) {
+			  markersAlachua = new String(data);
+			  updateLoad(markersAlachua);
+			}, 'text');
+			$.get( "data/markers_broward.txt", function( data ) {
+			  markersBroward = new String(data);
+			  updateLoad(markersBroward);
+			}, 'text');
+			$.get( "data/fontaneda.txt", function( data ) {
+			  fontaneda = new String(data);
+			  updateLoad(fontaneda);
+			}, 'text');
+			$.get( "data/spanish_florida.txt", function( data ) {
+			  spanishFlorida = new String(data);
+			  updateLoad(spanishFlorida);
+			}, 'text');
+
+			var textCol = $("#text-column");
+			var textTitle = $("#text-title");
+			var textBody = $("#text-body");
+			var about = $("#about");
+			
+			about.click(showAbout);
+			var currentMarker = L.marker();
+			var map = L.mapbox.map('map', undefined);
+			map.attributionControl.removeFrom(map);
+			// The visible tile layer
+			L.mapbox.tileLayer('trstorey.lo02bfng').addTo(map);
+
+			
+
+			var featureLayer = L.mapbox.featureLayer('trstorey.lo02bfng')
+			.addTo(map);
+
+			featureLayer.on('ready', function () {
+				featureLayer.setStyle({opacity: 0.0, fillOpacity: 0.0});
+			});
+
+			featureLayer.on('click', function(e) {
+			  e.layer.closePopup();
+			  map.removeLayer(currentMarker);
+			  var feature = e.layer.feature;
+			  currentMarker = L.marker(e.latlng, {
+			    icon: L.mapbox.marker.icon({
+			        'marker-size': 'small',
+			        'marker-color': '#caa'
+			    	})
+				}).addTo(map);
+			  var sentences = rm.generateSentences(Math.floor(Math.random()*8+6));
+			  textTitle.html(feature.properties.title);
+			  textBody.html(sentences.join(" "));
+			});
+
+			// Finally, center the map.
+			map.setView([31, -82], 9);
+
+			function showAbout () {
+				textTitle.html("About");
+				textBody.html("Artist statement for site of the first fort.");
+			}
+		});
 
 		
 
-		var featureLayer = L.mapbox.featureLayer('trstorey.lo02bfng')
-		.addTo(map);
-
-		featureLayer.on('ready', function () {
-			featureLayer.setStyle({opacity: 0.0, fillOpacity: 0.0});
-		});
-
-		featureLayer.on('click', function(e) {
-		  e.layer.closePopup();
-		  map.removeLayer(currentMarker);
-		  var feature = e.layer.feature;
-		  currentMarker = L.marker(e.latlng, {
-		    icon: L.mapbox.marker.icon({
-		        'marker-size': 'small',
-		        'marker-color': '#caa'
-		    	})
-			}).addTo(map);
-		  textTitle.html(feature.properties.title);
-		  textBody.html("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla pharetra turpis eu mi pretium, quis lacinia purus egestas. Donec at erat condimentum, feugiat leo sed, consequat dui. Nullam arcu nunc, finibus sed ipsum et, suscipit feugiat orci. Nullam a congue ex. Ut et pretium libero, in lobortis lectus. Vivamus interdum enim at enim scelerisque, eget ultrices tellus consectetur. Donec blandit augue at lacinia convallis. Curabitur pharetra magna ut vestibulum pharetra. Aliquam sed pulvinar est, eu placerat magna. Pellentesque gravida rutrum dolor, vel sodales turpis accumsan in.<br/>Integer interdum accumsan erat eu fringilla. Praesent ut urna est. Vivamus vulputate condimentum arcu id consequat. Ut magna ligula, ornare ac varius pulvinar, fermentum quis lectus. Cras in rhoncus sem. Quisque sit amet ligula accumsan, consequat leo eget, blandit est. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Aliquam dolor justo, gravida vitae metus ac, ultricies vestibulum lacus. In hac habitasse platea dictumst. Donec eget tellus quis felis tincidunt convallis. Praesent luctus, eros in aliquam pulvinar, tortor diam tempus quam, non finibus nulla nunc vel dolor. Sed dapibus est vitae libero volutpat, in aliquam metus rutrum. Aliquam nec lorem id nulla placerat rhoncus. Suspendisse eu eros augue.");
-		});
-
-		// Finally, center the map.
-		map.setView([31, -82], 9);
-
-		function showAbout () {
-			textTitle.html("About");
-			textBody.html("Artist statement for site of the first fort.");
-		}
+		
 
 	</script>
 </body>
