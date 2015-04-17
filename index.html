@@ -8,7 +8,10 @@
 	<link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.8/mapbox.css' rel='stylesheet' />
 	<!-- JQ -->
 	<script src='./libs/jquery/dist/jquery.min.js'></script>
+	<!-- Progress bar -->
 	<script src='./libs/progressbar.js/dist/progressbar.min.js'></script>
+	<!-- lodash -->
+	<script src='./libs/lodash/lodash.min.js'></script>
 	<!-- RiTa -->
 	<script src="./libs/rita/rita.min.js"></script>
 	<!-- CSS -->
@@ -44,16 +47,25 @@
 
 	<script>
 		L.mapbox.accessToken = 'pk.eyJ1IjoidHJzdG9yZXkiLCJhIjoiUzI3VDJDbyJ9.RWm7-0aLW4yy1ZzDt8I5Hw';
+		var textsToLoad = {
+			markersAlachua : {filename: "data/markers_alachua.txt", text : ""},
+			markersBroward : {filename: "data/markers_broward.txt", text : ""},
+			markersStJohns : {filename: "data/markers_stjohns.txt", text : ""},
+			fontaneda 	   : {filename: "data/fontaneda.txt", 		text : ""},
+			spanishFlorida : {filename: "data/spanish_florida.txt", text : ""},
+		};
+		var titleSources = [
+			"data/spanishLastNames.json",
+			"data/authors.json",
+			"data/nouns.json",
+			"data/landforms.json"
+		];
+		var titleParts = {names: [], types: []};
 
-		var markersStJohns = "";
-		var fontaneda = "";
-		var markersAlachua = "";
-		var markersBroward = "";
-		var spanishFlorida = "";
 		$(document).ready(function () {
 
-			var circleProgress = 0.0;
-			var rm  = new RiMarkov(5, true, false);
+			var circleProgress = 0.1;
+			var rm  = new RiMarkov(3, true, false);
 			var circle = new ProgressBar.Circle('#progress', {
 		        color: '#555',
 		        trailColor: '#eee',
@@ -64,9 +76,9 @@
 
 		    circle.set(circleProgress);
 
-		    function updateLoad (str) {
-		    	rm.loadText(str);
-			    circleProgress += 0.2;
+		    function updateLoad (data) {
+		    	if(data) rm.loadText(data);
+			    circleProgress += 0.1;
 			    circle.animate(circleProgress, {}, function () {
 
 			    	if(circle.value() >= 1.0){
@@ -77,26 +89,33 @@
 			    });
 		    }
 
-			$.get( "data/markers_stjohns.txt", function( data ) {
-			  markersStJohns = new String(data);
-			  updateLoad(markersStJohns);
-			}, 'text');
-			$.get( "data/markers_alachua.txt", function( data ) {
-			  markersAlachua = new String(data);
-			  updateLoad(markersAlachua);
-			}, 'text');
-			$.get( "data/markers_broward.txt", function( data ) {
-			  markersBroward = new String(data);
-			  updateLoad(markersBroward);
-			}, 'text');
-			$.get( "data/fontaneda.txt", function( data ) {
-			  fontaneda = new String(data);
-			  updateLoad(fontaneda);
-			}, 'text');
-			$.get( "data/spanish_florida.txt", function( data ) {
-			  spanishFlorida = new String(data);
-			  updateLoad(spanishFlorida);
-			}, 'text');
+		    function getText (str, fn) {
+		    	$.get(fn, function (data) {
+		    		str = new String(data);
+		    		updateLoad(str);
+		    	}, 'text');
+		    }
+
+		    function getData (fn, i) {
+		    	$.get(fn, function (data) {
+		    		if(i != 3) titleParts.names = titleParts.names.concat(data.data);
+		    		else titleParts.types = data.data;
+		    		updateLoad(null);
+		    	}, 'json');
+		    }
+
+		    function generateTitle (tp) {
+		    	var title =  _.sample(tp.names) + " " + _.sample(tp.types);
+		    	return _.startCase(title);
+		    }
+
+			_.forEach(textsToLoad, function (txt) {
+				getText(txt.text, txt.filename);
+			});
+
+			_.forEach(titleSources, function (ts, i) {
+				getData(ts, i);
+			});
 
 			var textCol = $("#text-column");
 			var textTitle = $("#text-title");
@@ -126,16 +145,16 @@
 			  currentMarker = L.marker(e.latlng, {
 			    icon: L.mapbox.marker.icon({
 			        'marker-size': 'small',
-			        'marker-color': '#caa'
+			        'marker-color': '#eee'
 			    	})
 				}).addTo(map);
 			  var sentences = rm.generateSentences(Math.floor(Math.random()*8+6));
-			  textTitle.html(feature.properties.title);
+			  textTitle.html(generateTitle(titleParts));
 			  textBody.html(sentences.join(" "));
 			});
 
 			// Finally, center the map.
-			map.setView([31, -82], 9);
+			map.setView([31, -82], 7);
 
 			function showAbout () {
 				textTitle.html("About");

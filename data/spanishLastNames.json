@@ -1,7 +1,7 @@
 {
   "description": "A list of common Spanish last names.",
   "source": "https://github.com/olea/lemarios",
-  "lastNames":
+  "data":
     [ "Aguilar",
       "Alonso",
       "Álvarez",

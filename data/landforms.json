@@ -1,6 +1,6 @@
 {
 	"description" : "a list of geographic and geological landforms",
-	"landforms" : [
+	"data" : [
 		"aquifer",
 		"badlands",
 		"bank",
