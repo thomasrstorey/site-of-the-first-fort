@@ -55,16 +55,19 @@
 			spanishFlorida : {filename: "data/spanish_florida.txt", text : ""},
 		};
 		var titleSources = [
+		    "data/spanishFirstNames.json",
 			"data/spanishLastNames.json",
 			"data/authors.json",
 			"data/nouns.json",
 			"data/landforms.json"
 		];
 		var titleParts = {names: [], types: []};
+		var aboutSource = "data/about.txt";
+		var aboutTxt = "";
 
 		$(document).ready(function () {
 
-			var circleProgress = 0.1;
+			var circleProgress = 0.0;
 			var rm  = new RiMarkov(3, true, false);
 			var circle = new ProgressBar.Circle('#progress', {
 		        color: '#555',
@@ -98,7 +101,7 @@
 
 		    function getData (fn, i) {
 		    	$.get(fn, function (data) {
-		    		if(i != 3) titleParts.names = titleParts.names.concat(data.data);
+		    		if(i != 4) titleParts.names = titleParts.names.concat(data.data);
 		    		else titleParts.types = data.data;
 		    		updateLoad(null);
 		    	}, 'json');
@@ -121,6 +124,10 @@
 			var textTitle = $("#text-title");
 			var textBody = $("#text-body");
 			var about = $("#about");
+
+			$.get(aboutSource, function (data) {
+		    		aboutTxt = new String(data);
+		    	}, 'text');
 			
 			about.click(showAbout);
 			var currentMarker = L.marker();
@@ -157,8 +164,8 @@
 			map.setView([31, -82], 7);
 
 			function showAbout () {
-				textTitle.html("About");
-				textBody.html("Artist statement for site of the first fort.");
+				textTitle.html("Site of the First Fort");
+				textBody.html(aboutTxt);
 			}
 		});
 
